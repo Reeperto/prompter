@@ -8,6 +8,8 @@ const RESET: &str = "\u{001b}[0m";
 const MAGENTA: &str = "\u{001b}[35m";
 const GREEN: &str = "\u{001b}[32m";
 
+const BRIGHT_BLACK: &str = "\u{001b}[38;2;38;38;38m";
+
 const MAX_PATH_LENGTH: usize = 25;
 
 fn main() {
@@ -28,9 +30,13 @@ fn main() {
     let (term_width, _) = terminal::size().unwrap().into();
     let time = get_time();
 
-    let pad = " ".repeat((term_width as usize) - user.len() - cwd.len() - time.len() - 2);
-
+    content_line.push_str(BRIGHT_BLACK);
+    content_line.push_str(" ");
+    let pad ="‧".repeat((term_width as usize) - user.len() - cwd.len() - time.len() - 4);
     content_line.push_str(&pad);
+    content_line.push_str(" ");
+    content_line.push_str(GREEN);
+
     content_line.push_str(&time);
 
     print!("{}", content_line);

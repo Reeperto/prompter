@@ -5,6 +5,7 @@
 
 ![GitHub](https://img.shields.io/github/license/reeperto/prompter)
 ![Shell](https://img.shields.io/badge/shell-fish-blue)
+[![Rust](https://github.com/Reeperto/prompter/actions/workflows/rust.yml/badge.svg)](https://github.com/Reeperto/prompter/actions/workflows/rust.yml)
 
 Prompter provides a simple prompt with a colorful design and useful integrations.
 

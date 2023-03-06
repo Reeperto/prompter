@@ -10,7 +10,7 @@ const GREEN: &str = "\u{001b}[32m";
 
 const BRIGHT_BLACK: &str = "\u{001b}[38;2;38;38;38m";
 
-const MAX_PATH_LENGTH: usize = 25;
+const MAX_PATH_LENGTH: usize = 30;
 
 pub fn prompt() {
     let (term_width, _) = terminal::size().unwrap();

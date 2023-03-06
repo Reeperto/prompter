@@ -45,7 +45,7 @@ pub fn prompt() {
 
     // TODO: Make sure that username length wont result in a kernel panic
     print!(
-        "\n┗{}{}{RESET}",
+        "\n┗{}{}{RESET} ",
         git,
         "━".repeat(get_user().len() - git.chars().count() - 1)
     );

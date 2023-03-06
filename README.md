@@ -1,7 +1,14 @@
 <img src="docs/logo.png" align="left" width="192px" height="192px"/>
 <img align="left" width="0" height="192px" hspace="10"/>
 
-A simple and heavily opionated shell for Fish.
+> **A simple and heavily opionated shell for Fish.**
+
+![GitHub](https://img.shields.io/github/license/reeperto/prompter)
+![Shell](https://img.shields.io/badge/shell-fish-blue)
+
+Prompter provides a simple prompt with a colorful design and useful integrations.
+
+<br>
 
 # TODO
 

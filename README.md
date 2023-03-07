@@ -14,5 +14,6 @@ Prompter provides a simple prompt with a colorful design and useful integrations
 # TODO
 
 - [ ] Support more shells than Fish
+- [ ] Add documentation
 - [ ] Investigate ``fish_right_prompt`` for rendering
 - [ ] Make elements modules/modular

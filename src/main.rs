@@ -1,5 +1,8 @@
+use display::PromptError;
+
 mod display;
 
-fn main() {
-    display::prompt();
+fn main() -> Result<(), PromptError> {
+    display::prompt()?;
+    Ok(())
 }

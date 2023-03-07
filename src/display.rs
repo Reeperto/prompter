@@ -1,6 +1,17 @@
 use crossterm::terminal;
-use std::env;
+use std::env::VarError;
+use std::io::{stdout, Write};
 use std::usize;
+use std::{env, io};
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum PromptError {
+    #[error("Unable to display content")]
+    DisplayError(#[from] io::Error),
+    #[error("Unable to get environment key `{0}`")]
+    GatherError(#[from] VarError),
+}
 
 const BOLD: &str = "\u{001b}[1m";
 const RESET: &str = "\u{001b}[0m";
@@ -13,11 +24,11 @@ const BRIGHT_BLACK: &str = "\u{001b}[38;2;38;38;38m";
 // TODO: Programatically determine the longest path size
 const MAX_PATH_LENGTH: usize = 30;
 
-pub fn prompt() {
-    let (term_width, _) = terminal::size().unwrap();
+pub fn prompt() -> Result<(), PromptError> {
+    let (term_width, _) = terminal::size()?;
 
-    let user = get_user();
-    let cwd = get_cwd();
+    let user = get_user()?;
+    let cwd = get_cwd()?;
     let time = get_time();
 
     // TODO: Investigate fish_right_prompt
@@ -28,6 +39,7 @@ pub fn prompt() {
         false => "",
     };
 
+    // TODO: Investigate doing a modular system
     let content_line = BOLD.to_owned()
         + MAGENTA
         + &user
@@ -42,18 +54,18 @@ pub fn prompt() {
         + GREEN
         + &time;
 
-    print!("{}", content_line);
+    stdout().write(&content_line.into_bytes())?;
 
-    // TODO: Make sure that username length wont result in a kernel panic
-    print!(
-        "\n┗{}{}{RESET} ",
-        git,
-        "━".repeat(get_user().len() - git.chars().count() - 1)
-    );
+    // TODO: Make sure that username length wont result in a panic
+    let content_line = "\n┗".to_string() + git + &"━".repeat(user.len() - git.chars().count() - 1) + " ";
+
+    stdout().write(&content_line.into_bytes())?;
+
+    Ok(())
 }
 
-fn get_user() -> String {
-    env::var("USER").unwrap()
+fn get_user() -> Result<String, VarError> {
+    env::var("USER")
 }
 
 fn get_time() -> String {
@@ -63,26 +75,33 @@ fn get_time() -> String {
 }
 
 fn in_git_repo() -> bool {
-    let cwd = env::current_dir().unwrap();
+    // If the current directory fails to match, just safely return false
+    let cwd = match env::current_dir() {
+        Ok(dir) => dir,
+        Err(_) => return false,
+    };
 
-    return cwd.ancestors().any(|d| {
-        d.read_dir()
-            .unwrap()
-            .any(|f| f.as_ref().unwrap().file_name().eq(".git"))
-    });
+    // If getting a dir's contents fails, just ignore it
+    cwd.ancestors().any(|d| match d.read_dir() {
+        Ok(mut contents) => contents.any(|f| match f.as_ref() {
+            Ok(file) => file.file_name().eq(".git"),
+            Err(_) => false,
+        }),
+        Err(_) => false,
+    })
 }
 
-fn get_cwd() -> String {
-    let home_dir = env::var("HOME").unwrap();
-    let cwd = env::current_dir();
+fn get_cwd() -> Result<String, PromptError> {
+    let home_dir = env::var("HOME")?;
+    let cwd = env::current_dir()?;
 
-    let dir = match cwd {
-        Ok(cwd) => cwd.to_str().unwrap().to_string().replace(&home_dir, "~"),
-        Err(_) => "[ERROR]".to_string(),
+    let dir = match cwd.to_str() {
+        Some(dir) => dir.to_string().replace(&home_dir, "~"),
+        None => "[ERROR]".to_string(),
     };
 
     if dir.len() <= MAX_PATH_LENGTH {
-        dir
+        Ok(dir)
     } else {
         let split_dir: Vec<&str> = dir.split('/').collect();
         let mut dir = String::new();
@@ -91,11 +110,11 @@ fn get_cwd() -> String {
             if split_dir[i] != "~" {
                 dir.push('/')
             }
-            dir.push_str(split_dir[i].chars().next().unwrap().to_string().as_str());
+            dir.push_str(split_dir[i].chars().next().unwrap_or(' ').to_string().as_str());
         });
         dir.push('/');
         dir.push_str(split_dir[split_dir.len() - 1]);
 
-        dir
+        Ok(dir)
     }
 }

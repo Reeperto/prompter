@@ -1,4 +1,3 @@
-use crossterm::terminal;
 use std::env::VarError;
 use std::io::{stdout, Write};
 use std::usize;
@@ -24,15 +23,13 @@ const BRIGHT_BLACK: &str = "\u{001b}[38;2;38;38;38m";
 // TODO: Programatically determine the longest path size
 const MAX_PATH_LENGTH: usize = 30;
 
-pub fn prompt() -> Result<(), PromptError> {
-    let (term_width, _) = terminal::size()?;
-
+pub fn left_prompt() -> Result<(), PromptError> {
     let user = get_user()?;
     let cwd = get_cwd()?;
-    let time = get_time();
 
     // TODO: Investigate fish_right_prompt
-    let pad = "‧".repeat((term_width as usize) - user.len() - cwd.len() - time.len() - 4);
+    // NOTE: By placing characters within the space, under terminal resizes the prompt characters
+    // wrap around and in general makes it look quite ugly. *Potentially remove*.
 
     let git = match in_git_repo() {
         true => " ",
@@ -40,26 +37,29 @@ pub fn prompt() -> Result<(), PromptError> {
     };
 
     // TODO: Investigate doing a modular system
-    let content_line = BOLD.to_owned()
-        + MAGENTA
-        + &user
-        + RESET
-        + GREEN
-        + " "
-        + &cwd
-        + BRIGHT_BLACK
-        + " "
-        + &pad
-        + " "
-        + GREEN
-        + &time;
+    let content_line =
+        BOLD.to_owned() + MAGENTA + &user + RESET + GREEN + " " + &cwd + BRIGHT_BLACK;
 
-    stdout().write(&content_line.into_bytes())?;
+    stdout().write_all(&content_line.into_bytes())?;
 
     // TODO: Make sure that username length wont result in a panic
-    let content_line = "\n┗".to_string() + git + &"━".repeat(user.len() - git.chars().count() - 1) + " ";
+    let content_line = GREEN.to_string()
+        + "\n┗"
+        + git
+        + &"━".repeat(user.len() - git.chars().count() - 1)
+        + RESET
+        + " ";
 
-    stdout().write(&content_line.into_bytes())?;
+    stdout().write_all(&content_line.into_bytes())?;
+
+    Ok(())
+}
+
+pub fn right_prompt() -> Result<(), PromptError> {
+    let time = get_time();
+    let content = GREEN.to_owned() + &time + RESET;
+
+    stdout().write_all(&content.into_bytes())?;
 
     Ok(())
 }
@@ -110,7 +110,14 @@ fn get_cwd() -> Result<String, PromptError> {
             if split_dir[i] != "~" {
                 dir.push('/')
             }
-            dir.push_str(split_dir[i].chars().next().unwrap_or(' ').to_string().as_str());
+            dir.push_str(
+                split_dir[i]
+                    .chars()
+                    .next()
+                    .unwrap_or(' ')
+                    .to_string()
+                    .as_str(),
+            );
         });
         dir.push('/');
         dir.push_str(split_dir[split_dir.len() - 1]);
